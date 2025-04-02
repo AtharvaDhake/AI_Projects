@@ -23,7 +23,8 @@ def load_model():
 model = load_model()
 
 # Define Class Names (Updated)
-class_name = ['Apple___Apple_scab',
+class_name = [
+'Apple___Apple_scab',
  'Apple___Black_rot',
  'Apple___Cedar_apple_rust',
  'Apple___healthy',
@@ -60,7 +61,8 @@ class_name = ['Apple___Apple_scab',
  'Tomato___Target_Spot',
  'Tomato___Tomato_Yellow_Leaf_Curl_Virus',
  'Tomato___Tomato_mosaic_virus',
- 'Tomato___healthy']
+ 'Tomato___healthy'
+]
 
 # Model Prediction Function
 def model_prediction(test_image):
