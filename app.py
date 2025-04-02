@@ -4,9 +4,16 @@ import numpy as np
 from PIL import Image  # For image handling
 
 # Load TensorFlow Model Once
+import os
+
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("my_model.h5")  # Ensure the model is in the repo
+    model_path = "my_model.h5"
+    if not os.path.exists(model_path):
+        st.error(f"⚠️ Model file not found: {model_path}")
+        return None
+    return tf.keras.models.load_model(model_path)
+
 
 model = load_model()
 
