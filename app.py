@@ -1,27 +1,20 @@
-import subprocess
 import sys
+import subprocess
 
-# Force-install dependencies if missing
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+def install(pkg):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
-REQUIRED_PACKAGES = [
-    ("tensorflow-cpu", "2.15.0"),
-    ("Pillow", "10.1.0"),
-    ("numpy", "1.23.5"),
-    ("protobuf", "3.20.3")
-]
+try:
+    import tensorflow as tf
+except ImportError:
+    install("tensorflow-cpu==2.16.1")
+    import tensorflow as tf
 
-for pkg, ver in REQUIRED_PACKAGES:
-    try:
-        __import__(pkg.split("[")[0])
-    except ImportError:
-        install(f"{pkg}=={ver}")
-
-import tensorflow as tf
+# Rest of your imports...
 from PIL import Image
 import numpy as np
 import streamlit as st
+import tensorflow as tf
 import os
 
 # Set page configuration
