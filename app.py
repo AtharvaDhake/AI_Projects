@@ -83,13 +83,15 @@ def main():
 
     if app_mode == "Home":
         st.header("🌿 Plant Disease Classification System")
-        st.image("home_page.jpeg", use_column_width=True)
         st.markdown("""
         ### How to Use:
         1. Go to **Diagnose** page
         2. Upload a clear image of a plant leaf
         3. Get instant disease classification
         """)
+        st.write("")  # Spacer
+        st.image("https://via.placeholder.com/800x400?text=Plant+Disease+Classifier", 
+                use_column_width=True)
 
     elif app_mode == "Class List":
         st.header("📋 Complete Class List (38 Categories)")
