@@ -16,9 +16,9 @@ def load_model(model_path):
 # Load model at startup (cached to avoid reloading)
 @st.cache_resource
 def get_model():
-    model_path = "trained_plant_disease_model.keras"  # Updated model filename to match your code
+    model_path = "my_model.keras"  # Using your model filename
     if not os.path.exists(model_path):
-        st.error(f"Model file not found at: {model_path}")
+        st.error(f"Model file not found at: {os.path.abspath(model_path)}")
         return None
     return load_model(model_path)
 
@@ -58,7 +58,8 @@ if app_mode == "Home":
             st.image(image_path, use_column_width=True)
         else:
             st.warning("Home page image not found. Using placeholder.")
-            # You can add a placeholder image here if you want
+            # Example placeholder (remove or replace with your own)
+            st.image(Image.new('RGB', (600, 400), color = (73, 109, 137)))
     except Exception as e:
         st.error(f"Error loading image: {str(e)}")
     
@@ -120,9 +121,9 @@ elif app_mode == "Disease Recognition":
                 result_index = model_prediction(test_image)
                 
                 if result_index != -1:  # Only show results if prediction was successful
-                    st.write("Our Prediction")
+                    st.write("## Prediction Result")
                     
-                    # Class names (fixed formatting issues from original)
+                    # Class names
                     class_name = [
                         'Apple___Apple_scab', 
                         'Apple___Black_rot', 
@@ -165,6 +166,13 @@ elif app_mode == "Disease Recognition":
                     ]
                     
                     if 0 <= result_index < len(class_name):
-                        st.success(f"Model predicts: {class_name[result_index]}")
+                        st.success(f"### The model predicts: **{class_name[result_index]}**")
+                        
+                        # Add some visual feedback based on prediction
+                        if "healthy" in class_name[result_index]:
+                            st.balloons()
+                            st.success("Great news! Your plant appears to be healthy!")
+                        else:
+                            st.warning("This plant shows signs of disease. Consider consulting with a plant specialist.")
                     else:
                         st.error("Prediction result out of range")
