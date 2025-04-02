@@ -8,12 +8,11 @@ import os
 
 @st.cache_resource
 def load_model():
-model_path = "my_model.h5"  # Update if in a subdirectory
-
-if os.path.exists(model_path):
-    print(f"✅ Model file found at: {os.path.abspath(model_path)}")
-else:
-    print("❌ Model file NOT found. Check the path and permissions.")
+    model_path = "my_model.h5"  # Update if in a subdirectory
+    if os.path.exists(model_path):
+        print(f"✅ Model file found at: {os.path.abspath(model_path)}")
+    else:
+        print("❌ Model file NOT found. Check the path and permissions.")
 
 
 
