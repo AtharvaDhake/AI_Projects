@@ -1,16 +1,24 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
+import os
 from PIL import Image
 
-# Load TensorFlow Model Once
-@st.cache_resource
+# Ensure model file exists
+MODEL_PATH = "my_model.h5"
+
+if not os.path.exists(MODEL_PATH):
+    st.error(f"⚠️ Model file '{MODEL_PATH}' not found. Please check the file path.")
+
+# Load TensorFlow Model
 def load_model():
     try:
-        model = tf.keras.models.load_model("my_model.h5")  # Ensure "my_model.h5" exists
+        st.write("🔍 Loading model...")
+        model = tf.keras.models.load_model(MODEL_PATH)
+        st.success("✅ Model Loaded Successfully!")
         return model
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"⚠️ Error loading model: {e}")
         return None
 
 model = load_model()
@@ -19,19 +27,19 @@ model = load_model()
 def model_prediction(test_image):
     try:
         image = Image.open(test_image).convert("RGB")  # Convert to RGB
-        image = image.resize((128, 128))  # Resize to model input
+        image = image.resize((128, 128))  # Resize to match model input
         input_arr = np.array(image) / 255.0  # Normalize
         input_arr = np.expand_dims(input_arr, axis=0)  # Convert to batch
         prediction = model.predict(input_arr)
         result_index = np.argmax(prediction)
         return result_index
     except Exception as e:
-        st.error(f"Error processing image: {e}")
+        st.error(f"⚠️ Error processing image: {e}")
         return None
 
 # Sidebar
-st.sidebar.title("Dashboard")
-app_mode = st.sidebar.selectbox("Select Page", ["Home", "About", "Disease Recognition"])
+st.sidebar.title("🌿 Plant Disease Dashboard")
+app_mode = st.sidebar.selectbox("📌 Select Page", ["Home", "About", "Disease Recognition"])
 
 # Home Page
 if app_mode == "Home":
@@ -89,4 +97,3 @@ elif app_mode == "Disease Recognition":
                         st.error("⚠️ Error making prediction.")
                 else:
                     st.error("⚠️ Model not loaded. Please check the model file.")
-
