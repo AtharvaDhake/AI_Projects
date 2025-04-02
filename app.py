@@ -27,15 +27,23 @@ model = load_model()
 def model_prediction(test_image):
     try:
         image = Image.open(test_image).convert("RGB")  # Convert to RGB
-        image = image.resize((128, 128))  # Resize to match model input
-        input_arr = np.array(image) / 255.0  # Normalize
-        input_arr = np.expand_dims(input_arr, axis=0)  # Convert to batch
+        image = image.resize((128, 128))  # Resize to model input size
+        input_arr = np.array(image) / 255.0  # Normalize (scale to 0-1)
+        
+        st.write(f"🔍 Processed Image Shape: {input_arr.shape}")  # Debugging
+        st.image(image, caption="Preprocessed Image", use_column_width=True)
+
+        input_arr = np.expand_dims(input_arr, axis=0)  # Convert to batch format
+        
         prediction = model.predict(input_arr)
         result_index = np.argmax(prediction)
+        
+        st.write(f"🔍 Raw Prediction Output: {prediction}")  # Debugging
         return result_index
     except Exception as e:
         st.error(f"⚠️ Error processing image: {e}")
         return None
+
 
 # Sidebar
 st.sidebar.title("🌿 Plant Disease Dashboard")
