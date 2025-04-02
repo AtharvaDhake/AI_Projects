@@ -7,7 +7,7 @@ from PIL import Image  # For image handling
 import os
 
 @st.cache_resource
-def load_model()
+def load_model():
 model_path = "my_model.h5"  # Update if in a subdirectory
 
 if os.path.exists(model_path):
