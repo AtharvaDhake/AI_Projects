@@ -23,7 +23,7 @@ def load_model():
 model = load_model()
 
 # Define Class Names (Updated)
-class_name = [
+class_names = [
 'Apple___Apple_scab',
  'Apple___Black_rot',
  'Apple___Cedar_apple_rust',
