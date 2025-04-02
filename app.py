@@ -7,12 +7,14 @@ from PIL import Image  # For image handling
 import os
 
 @st.cache_resource
-def load_model():
-    model_path = "my_model.h5"
-    if not os.path.exists(model_path):
-        st.error(f"⚠️ Model file not found: {model_path}")
-        return None
-    return tf.keras.models.load_model(model_path)
+def load_model()
+model_path = "my_model.h5"  # Update if in a subdirectory
+
+if os.path.exists(model_path):
+    print(f"✅ Model file found at: {os.path.abspath(model_path)}")
+else:
+    print("❌ Model file NOT found. Check the path and permissions.")
+
 
 
 model = load_model()
