@@ -24,7 +24,6 @@ model = load_model()
 
 # Define Class Names (Updated)
 class_names = [
-CLASS_NAMES = [
     'Apple___Apple_scab',
     'Apple___Black_rot',
     'Apple___Cedar_apple_rust',
@@ -63,7 +62,6 @@ CLASS_NAMES = [
     'Tomato___Target_Spot',
     'Tomato___Tomato_mosaic_virus',
     'Tomato___Tomato_Yellow_Leaf_Curl_Virus'
-]
 ]
 
 # Model Prediction Function
