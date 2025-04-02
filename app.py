@@ -2,17 +2,21 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image  # For image handling
-
-# Load TensorFlow Model Once
 import os
 
 @st.cache_resource
 def load_model():
-    model_path = "my_model.h5"  # Update if in a subdirectory
-    if os.path.exists(model_path):
-        print(f"✅ Model file found at: {os.path.abspath(model_path)}")
-    else:
-        print("❌ Model file NOT found. Check the path and permissions.")
+    model_path = "my_model.h5"  # Change path if needed
+    if not os.path.exists(model_path):
+        st.error(f"⚠️ Model file not found at: {model_path}")
+        return None  # Prevents a crash if file is missing
+    try:
+        model = tf.keras.models.load_model(model_path)
+        st.success("✅ Model loaded successfully!")
+        return model
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        return None  # Prevents breaking the app
 
 
 
@@ -36,22 +40,21 @@ class_names = [
 
 # Model Prediction Function
 def model_prediction(test_image):
-    try:
-        image = Image.open(test_image).convert("RGB")  # Convert image to RGB
-        image = image.resize((128, 128))  # Resize to model input size
-        input_arr = np.array(image) / 255.0  # Normalize
-        input_arr = np.expand_dims(input_arr, axis=0)  # Add batch dimension
-        
-        st.write(f"🔍 Processed Image Shape: {input_arr.shape}")  # Debugging
-        st.image(image, caption="Preprocessed Image", use_column_width=True)
+    if model is None:
+        st.error("⚠️ Model not loaded. Cannot make predictions.")
+        return None
 
-        prediction = model.predict(input_arr)
-        result_index = np.argmax(prediction)
-        
-        st.write(f"🔍 Raw Prediction Output: {prediction}")  # Debugging
+    try:
+        image = Image.open(test_image).convert("RGB")
+        image = image.resize((128, 128))  # Resize to match model input size
+        input_arr = np.array(image) / 255.0  # Normalize pixel values
+        input_arr = np.expand_dims(input_arr, axis=0)  # Convert to batch
+
+        prediction = model.predict(input_arr)  # Ensure model is loaded
+        result_index = np.argmax(prediction)  # Get class index
         return result_index
     except Exception as e:
-        st.error(f"⚠️ Error processing image: {e}")
+        st.error(f"❌ Error processing image: {e}")
         return None
 
 # Sidebar
