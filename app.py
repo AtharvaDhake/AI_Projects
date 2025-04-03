@@ -2,7 +2,6 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-import cv2
 import os
 
 # Set page configuration
@@ -11,6 +10,14 @@ st.set_page_config(
     layout="wide",
     page_icon="🌱"
 )
+
+# Try to import OpenCV, fall back to PIL if not available
+try:
+    import cv2
+    USE_CV2 = True
+except ImportError:
+    USE_CV2 = False
+    st.warning("OpenCV not found. Using PIL for image processing instead.")
 
 # Constants (copied from your test code)
 CLASS_NAMES = [
@@ -33,26 +40,36 @@ CLASS_NAMES = [
 @st.cache_resource
 def load_model():
     try:
-        model = tf.keras.models.load_model('my_model.h5')
+        model = tf.keras.models.load_model('trained_model.h5')
         st.success("✅ Model loaded successfully!")
         return model
     except Exception as e:
         st.error(f"❌ Failed to load model: {str(e)}")
         return None
 
-# Image preprocessing (exactly matching your test code)
+# Image preprocessing with fallback
 def preprocess_image(image_path):
     try:
-        # Method 1: Using cv2 like in your test code
-        img_cv = cv2.imread(image_path)
-        img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
-        
-        # Method 2: Using tf.keras.preprocessing like in your test code
-        img_tf = tf.keras.preprocessing.image.load_img(image_path, target_size=(128, 128))
-        input_arr = tf.keras.preprocessing.image.img_to_array(img_tf)
-        input_arr = np.array([input_arr])  # Convert single image to a batch
-        
-        return img_cv, input_arr
+        if USE_CV2:
+            # Using cv2 like in your test code
+            img = cv2.imread(image_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            display_img = img.copy()
+            
+            # Convert to model input format
+            img = cv2.resize(img, (128, 128))
+            input_arr = img.astype(np.float32) / 255.0
+        else:
+            # Fallback using PIL
+            img = Image.open(image_path).convert('RGB')
+            display_img = np.array(img)
+            
+            # Convert to model input format
+            img = img.resize((128, 128))
+            input_arr = np.array(img) / 255.0
+            
+        input_arr = np.expand_dims(input_arr, axis=0)  # Convert single image to a batch
+        return display_img, input_arr
     except Exception as e:
         st.error(f"❌ Image processing error: {str(e)}")
         return None, None
@@ -80,7 +97,7 @@ def main():
         with open(temp_file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         
-        # Process image exactly like your test code
+        # Process image
         original_img, processed_img = preprocess_image(temp_file_path)
         
         if original_img is not None and processed_img is not None:
@@ -92,7 +109,7 @@ def main():
             if st.button("🔍 Analyze Image"):
                 with st.spinner("Processing..."):
                     try:
-                        # Predict (exactly like your test code)
+                        # Predict
                         prediction = model.predict(processed_img)
                         result_index = np.argmax(prediction)
                         model_prediction = CLASS_NAMES[result_index]
@@ -111,28 +128,16 @@ def main():
                             st.success(f"**Predicted Disease:** {model_prediction}")
                             st.info(f"**Confidence:** {confidence:.2f}%")
                             
-                            # Show raw prediction values for debugging
-                            with st.expander("Advanced Details"):
-                                st.write("Prediction array shape:", prediction.shape)
-                                st.write("Raw prediction values:", prediction)
-                                st.write("Top 3 predictions:")
-                                top3_indices = np.argsort(prediction[0])[-3:][::-1]
-                                for idx in top3_indices:
-                                    st.write(f"- {CLASS_NAMES[idx]}: {prediction[0][idx]*100:.2f}%")
+                            if "healthy" in model_prediction.lower():
+                                st.balloons()
+                                st.success("🎉 The plant appears healthy!")
+                            else:
+                                st.warning("⚠️ Potential disease detected")
                         
-                        # Add some helpful information based on prediction
-                        if "healthy" in model_prediction.lower():
-                            st.balloons()
-                            st.success("🎉 The plant appears healthy! No disease detected.")
-                        else:
-                            st.warning("⚠️ Potential disease detected. Consider consulting with a plant pathologist.")
-                            
+                        # Clean up temporary file
+                        os.remove(temp_file_path)
                     except Exception as e:
                         st.error(f"❌ Prediction failed: {str(e)}")
-                
-                # Clean up temporary file
-                os.remove(temp_file_path)
 
-# Run the app
 if __name__ == "__main__":
     main()
