@@ -11,7 +11,7 @@ st.set_page_config(page_title="Plant Doctor 🌱", layout="centered")
 @st.cache_resource
 def load_model():
     try:
-        model = tf.keras.models.load_model('trained_model.h5')
+        model = tf.keras.models.load_model('my_model.h5')
         return model
     except:
         st.error("❌ Couldn't load the model. Make sure 'trained_model.h5' is in the same folder.")
