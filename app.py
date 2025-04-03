@@ -2,145 +2,137 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+import cv2
 import os
 
-# Set page config
-st.set_page_config(page_title="Plant Disease Recognition", layout="wide")
+# Set page configuration
+st.set_page_config(
+    page_title="Plant Disease Classifier",
+    layout="wide",
+    page_icon="🌱"
+)
 
-# Load model with caching and verification
-@st.cache_resource
-def load_model():
-    model_path = "my_model.keras"
-    if not os.path.exists(model_path):
-        st.error(f"Model file not found at: {model_path}")
-        return None
-    
-    try:
-        model = tf.keras.models.load_model(model_path)
-        # Verify model can make predictions
-        dummy_input = np.random.rand(1, 128, 128, 3).astype(np.float32)
-        _ = model.predict(dummy_input)
-        return model
-    except Exception as e:
-        st.error(f"Error loading or verifying model: {str(e)}")
-        return None
-
-# Class names (ensure these exactly match your training labels)
+# Constants (copied from your test code)
 CLASS_NAMES = [
     'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
     'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
-    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_', 
-    'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
-    'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
-    'Grape___healthy', 'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot',
-    'Peach___healthy', 'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy',
-    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
-    'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew',
-    'Strawberry___Leaf_scorch', 'Strawberry___healthy', 'Tomato___Bacterial_spot',
-    'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
+    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_',
+    'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy', 'Grape___Black_rot',
+    'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy',
+    'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy',
+    'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 'Potato___Early_blight',
+    'Potato___Late_blight', 'Potato___healthy', 'Raspberry___healthy', 'Soybean___healthy',
+    'Squash___Powdery_mildew', 'Strawberry___Leaf_scorch', 'Strawberry___healthy',
+    'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold',
     'Tomato___Septoria_leaf_spot', 'Tomato___Spider_mites Two-spotted_spider_mite',
-    'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus',
-    'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'
+    'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus',
+    'Tomato___healthy'
 ]
 
-def preprocess_image(image):
-    """Match exactly how you preprocessed images during training"""
+# Load model with caching
+@st.cache_resource
+def load_model():
     try:
-        # Open and convert to RGB (important for PNGs with alpha channel)
-        img = Image.open(image).convert('RGB')
-        
-        # Resize using the exact same method as training
-        img = img.resize((128, 128), Image.BILINEAR)  # or whatever you used
-        
-        # Convert to array and normalize EXACTLY like training
-        img_array = np.array(img) / 255.0  # if you used 0-1 normalization
-        
-        # Add batch dimension
-        img_array = np.expand_dims(img_array, axis=0)
-        
-        return img_array
+        model = tf.keras.models.load_model('trained_model.h5')
+        st.success("✅ Model loaded successfully!")
+        return model
     except Exception as e:
-        st.error(f"Image processing error: {str(e)}")
+        st.error(f"❌ Failed to load model: {str(e)}")
         return None
 
-def predict_disease(image, model):
+# Image preprocessing (exactly matching your test code)
+def preprocess_image(image_path):
     try:
-        processed_img = preprocess_image(image)
-        if processed_img is None:
-            return None, None
-            
-        predictions = model.predict(processed_img)
-        predicted_class = CLASS_NAMES[np.argmax(predictions)]
-        confidence = np.max(predictions) * 100
-        return predicted_class, confidence
+        # Method 1: Using cv2 like in your test code
+        img_cv = cv2.imread(image_path)
+        img_cv = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+        
+        # Method 2: Using tf.keras.preprocessing like in your test code
+        img_tf = tf.keras.preprocessing.image.load_img(image_path, target_size=(128, 128))
+        input_arr = tf.keras.preprocessing.image.img_to_array(img_tf)
+        input_arr = np.array([input_arr])  # Convert single image to a batch
+        
+        return img_cv, input_arr
     except Exception as e:
-        st.error(f"Prediction error: {str(e)}")
+        st.error(f"❌ Image processing error: {str(e)}")
         return None, None
 
-# Debug function to compare with your test script
-def debug_prediction(image_path, model):
-    """Use this to verify your Streamlit preprocessing matches your test script"""
-    try:
-        # Load image the way your test script does
-        test_img = tf.keras.preprocessing.image.load_img(image_path, target_size=(128, 128))
-        test_array = tf.keras.preprocessing.image.img_to_array(test_img)
-        test_array = np.expand_dims(test_array, axis=0) / 255.0
-        
-        # Get test script prediction
-        test_pred = model.predict(test_array)
-        test_class = CLASS_NAMES[np.argmax(test_pred)]
-        
-        # Get Streamlit prediction
-        with open(image_path, 'rb') as f:
-            streamlit_class, _ = predict_disease(f, model)
-        
-        return {
-            'test_script_prediction': test_class,
-            'streamlit_prediction': streamlit_class,
-            'match': test_class == streamlit_class
-        }
-    except Exception as e:
-        return {'error': str(e)}
-
-# Sidebar navigation
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Detection", "Debug"])
-
-# Main detection page
-if page == "Detection":
-    st.title("🔍 Plant Disease Detection")
+# Main app function
+def main():
+    st.title("🌱 Plant Disease Classifier")
+    st.markdown("Upload an image of a plant leaf to detect potential diseases")
+    
+    # Load model
     model = load_model()
+    if model is None:
+        return
     
-    uploaded_file = st.file_uploader("Upload a plant leaf image", type=["jpg", "jpeg", "png"])
+    # File uploader
+    uploaded_file = st.file_uploader(
+        "Choose a plant leaf image", 
+        type=["jpg", "jpeg", "png"],
+        accept_multiple_files=False
+    )
     
-    if uploaded_file is not None and model is not None:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+    if uploaded_file is not None:
+        # Save uploaded file temporarily
+        temp_file_path = "temp_uploaded_image.jpg"
+        with open(temp_file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
         
-        if st.button("Predict Disease"):
-            with st.spinner("Analyzing..."):
-                disease, confidence = predict_disease(uploaded_file, model)
-                
-                if disease:
-                    with col2:
-                        st.subheader("Results")
-                        st.success(f"**Prediction:** {disease}")
-                        st.info(f"**Confidence:** {confidence:.2f}%")
+        # Process image exactly like your test code
+        original_img, processed_img = preprocess_image(temp_file_path)
+        
+        if original_img is not None and processed_img is not None:
+            # Display original image
+            st.subheader("Uploaded Image")
+            st.image(original_img, caption="Original Image", use_column_width=True)
+            
+            # Make prediction
+            if st.button("🔍 Analyze Image"):
+                with st.spinner("Processing..."):
+                    try:
+                        # Predict (exactly like your test code)
+                        prediction = model.predict(processed_img)
+                        result_index = np.argmax(prediction)
+                        model_prediction = CLASS_NAMES[result_index]
+                        confidence = np.max(prediction) * 100
                         
-                        # Show raw prediction values for debugging
-                        with st.expander("Debug Info"):
-                            processed_img = preprocess_image(uploaded_file)
-                            predictions = model.predict(processed_img)
-                            st.write("Raw prediction values:", predictions)
-                            st.write("Class indices:", np.argsort(predictions[0])[::-1])
+                        # Display results
+                        st.subheader("Analysis Results")
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.image(original_img, 
+                                    caption=f"Prediction: {model_prediction}",
+                                    use_column_width=True)
+                        
+                        with col2:
+                            st.success(f"**Predicted Disease:** {model_prediction}")
+                            st.info(f"**Confidence:** {confidence:.2f}%")
+                            
+                            # Show raw prediction values for debugging
+                            with st.expander("Advanced Details"):
+                                st.write("Prediction array shape:", prediction.shape)
+                                st.write("Raw prediction values:", prediction)
+                                st.write("Top 3 predictions:")
+                                top3_indices = np.argsort(prediction[0])[-3:][::-1]
+                                for idx in top3_indices:
+                                    st.write(f"- {CLASS_NAMES[idx]}: {prediction[0][idx]*100:.2f}%")
+                        
+                        # Add some helpful information based on prediction
+                        if "healthy" in model_prediction.lower():
+                            st.balloons()
+                            st.success("🎉 The plant appears healthy! No disease detected.")
+                        else:
+                            st.warning("⚠️ Potential disease detected. Consider consulting with a plant pathologist.")
+                            
+                    except Exception as e:
+                        st.error(f"❌ Prediction failed: {str(e)}")
+                
+                # Clean up temporary file
+                os.remove(temp_file_path)
 
-# Debug page to compare with test script
-elif page == "Debug" and load_model() is not None:
-    st.title("🐛 Debug Predictions")
-    st.warning("Compare Streamlit preprocessing with your test script")
-    
-    test_image_path = st.text_input("Path to test image (from your test script):")
-    if test_image_path and os.path.exists(test_image_path):
-        debug_info = debug_prediction(test_image_path, load_model())
-        st.json(debug_info)
+# Run the app
+if __name__ == "__main__":
+    main()
