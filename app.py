@@ -53,7 +53,7 @@ if app_mode == "Home":
     
     # Try to load home image with fallback
     try:
-        image_path = "home_page.jpeg"
+        image_path = "home_page.jpg"
         if os.path.exists(image_path):
             st.image(image_path, use_column_width=True)
         else:
