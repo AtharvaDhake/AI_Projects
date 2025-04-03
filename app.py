@@ -1,131 +1,117 @@
 import streamlit as st
 import tensorflow as tf
 import numpy as np
-from PIL import Image  # For image handling
+from PIL import Image
 import os
 
+# Set page config
+st.set_page_config(page_title="Plant Disease Recognition", layout="wide")
+
+# Load model with caching
 @st.cache_resource
 def load_model():
-    model_path = "my_model.h5"  # Change path if needed
+    model_path = "my_model.keras"
     if not os.path.exists(model_path):
-        st.error(f"⚠️ Model file not found at: {model_path}")
-        return None  # Prevents a crash if file is missing
+        st.error(f"Model file not found at: {model_path}")
+        return None
     try:
-        model = tf.keras.models.load_model(model_path)
-        st.success("✅ Model loaded successfully!")
-        return model
+        return tf.keras.models.load_model(model_path)
     except Exception as e:
-        st.error(f"❌ Error loading model: {e}")
-        return None  # Prevents breaking the app
-
-
-
-model = load_model()
-
-# Define Class Names (Updated)
-class_names = [
-    'Apple___Apple_scab',
-    'Apple___Black_rot',
-    'Apple___Cedar_apple_rust',
-    'Apple___healthy',
-    'Blueberry___healthy',
-    'Cherry_(including_sour)___Powdery_mildew',
-    'Cherry_(including_sour)___healthy',
-    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot',
-    'Corn_(maize)___Common_rust_',
-    'Corn_(maize)___Northern_Leaf_Blight',
-    'Corn_(maize)___healthy',
-    'Grape___Black_rot',
-    'Grape___Esca_(Black_Measles)',
-    'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)',
-    'Grape___healthy',
-    'Orange___Haunglongbing_(Citrus_greening)',
-    'Peach___Bacterial_spot',
-    'Peach___healthy',
-    'Pepper,_bell___Bacterial_spot',
-    'Pepper,_bell___healthy',
-    'Potato___Early_blight',
-    'Potato___Late_blight',
-    'Potato___healthy',
-    'Raspberry___healthy',
-    'Soybean___healthy',
-    'Squash___Powdery_mildew',
-    'Strawberry___Leaf_scorch',
-    'Strawberry___healthy',
-    'Tomato___Bacterial_spot',
-    'Tomato___Early_blight',
-    'Tomato___Late_blight',
-    'Tomato___Leaf_Mold',
-    'Tomato___Septoria_leaf_spot',
-    'Tomato___Spider_mites Two-spotted_spider_mite',
-    'Tomato___Target_Spot',
-    'Tomato___Tomato_Yellow_Leaf_Curl_Virus',
-    'Tomato___Tomato_mosaic_virus',
-    'Tomato___healthy']
-
-# Model Prediction Function
-def model_prediction(test_image):
-    if model is None:
-        st.error("⚠️ Model not loaded. Cannot make predictions.")
+        st.error(f"Error loading model: {str(e)}")
         return None
 
+# Class names
+CLASS_NAMES = [
+    'Apple Scab', 'Apple Black Rot', 'Apple Cedar Rust', 'Apple Healthy',
+    'Blueberry Healthy', 'Cherry Powdery Mildew', 'Cherry Healthy',
+    'Corn Cercospora Spot', 'Corn Common Rust', 'Corn Northern Blight', 'Corn Healthy',
+    'Grape Black Rot', 'Grape Esca', 'Grape Leaf Blight', 'Grape Healthy',
+    'Orange Citrus Greening', 'Peach Bacterial Spot', 'Peach Healthy',
+    'Bell Pepper Bacterial Spot', 'Bell Pepper Healthy',
+    'Potato Early Blight', 'Potato Late Blight', 'Potato Healthy',
+    'Raspberry Healthy', 'Soybean Healthy', 'Squash Powdery Mildew',
+    'Strawberry Leaf Scorch', 'Strawberry Healthy',
+    'Tomato Bacterial Spot', 'Tomato Early Blight', 'Tomato Late Blight',
+    'Tomato Leaf Mold', 'Tomato Septoria Spot', 'Tomato Spider Mites',
+    'Tomato Target Spot', 'Tomato Yellow Curl Virus', 'Tomato Mosaic Virus',
+    'Tomato Healthy'
+]
+
+# Preprocess and predict
+def predict_disease(image, model):
     try:
-        image = Image.open(test_image).convert("RGB")
-        image = image.resize((128, 128))  # Resize to match model input size
-        input_arr = np.array(image) / 255.0  # Normalize pixel values
-        input_arr = np.expand_dims(input_arr, axis=0)  # Convert to batch
-
-        prediction = model.predict(input_arr)  # Ensure model is loaded
-        result_index = np.argmax(prediction)  # Get class index
-        return result_index
+        img = Image.open(image).convert('RGB')
+        img = img.resize((128, 128))
+        img_array = tf.keras.preprocessing.image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0) / 255.0
+        
+        predictions = model.predict(img_array)
+        predicted_class = np.argmax(predictions[0])
+        confidence = np.max(predictions[0]) * 100
+        
+        return CLASS_NAMES[predicted_class], confidence
     except Exception as e:
-        st.error(f"❌ Error processing image: {e}")
-        return None
+        st.error(f"Error during prediction: {str(e)}")
+        return None, None
 
-# Sidebar
-st.sidebar.title("Dashboard")
-app_mode = st.sidebar.selectbox("Select Page", ["Home", "About", "Disease Recognition"])
+# Sidebar navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Home", "About", "Disease Detection"])
 
 # Home Page
-if app_mode == "Home":
-    st.header("PLANT DISEASE RECOGNITION SYSTEM")
-    image_path = "home_page.jpg"
-    st.image(image_path, use_column_width=True)
+if page == "Home":
+    st.title("🌱 Plant Disease Recognition System")
+    st.image("home_page.jpg", use_column_width=True)
     st.markdown("""
-    Welcome to the Plant Disease Recognition System! 🌿🔍
+    Welcome to our Plant Disease Recognition System! Upload an image of a plant leaf, 
+    and our AI will help identify potential diseases.
     
-    Our mission is to help identify plant diseases efficiently. Upload an image, and our system will analyze it.
-    
-    ### How It Works:
-    1. **Upload Image** (Disease Recognition Page)
-    2. **Analysis** (AI processes the image)
-    3. **Results** (View disease classification)
+    **How to use:**
+    1. Go to the **Disease Detection** page
+    2. Upload an image of a plant leaf
+    3. Click 'Predict' to analyze the image
     """)
 
 # About Page
-elif app_mode == "About":
-    st.header("About")
+elif page == "About":
+    st.title("ℹ️ About")
     st.markdown("""
-    #### About Dataset
-    This dataset consists of about 87K RGB images of healthy and diseased crop leaves, categorized into 38 classes.
+    **About the Dataset:**
+    - Contains 87,000+ images of healthy and diseased plant leaves
+    - Covers 38 different plant disease categories
+    - Divided into training (70,295), validation (17,572), and test (33) sets
     
-    #### Dataset Details:
-    - **Train:** 70,295 images
-    - **Validation:** 17,572 images
-    - **Test:** 33 images
+    **Model Information:**
+    - Uses a deep learning model trained on the PlantVillage dataset
+    - Achieves high accuracy in identifying common plant diseases
     """)
 
-# Disease Recognition Page
-elif app_mode == "Disease Recognition":
-    st.header("Disease Recognition")
-    test_image = st.file_uploader("Choose an Image:", type=["jpg", "png", "jpeg"])
-
-    if test_image:
-        if st.button("Show Image"):
-            st.image(test_image, use_column_width=True)
+# Detection Page
+elif page == "Disease Detection":
+    st.title("🔍 Disease Detection")
+    model = load_model()
+    
+    uploaded_file = st.file_uploader("Upload a plant leaf image", type=["jpg", "jpeg", "png"])
+    
+    if uploaded_file is not None:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
         
-        if st.button("Predict"):
-            with st.spinner("Please wait..."):
-                result_index = model_prediction(test_image)
-                if result_index is not None:
-                    st.success(f"Model Prediction: **{class_names[result_index]}**")
+        if st.button("Predict Disease"):
+            if model is None:
+                st.error("Model not loaded. Cannot make predictions.")
+            else:
+                with st.spinner("Analyzing..."):
+                    disease, confidence = predict_disease(uploaded_file, model)
+                    
+                    if disease:
+                        with col2:
+                            st.success(f"**Prediction:** {disease}")
+                            st.info(f"**Confidence:** {confidence:.2f}%")
+                            
+                            # Show treatment suggestions for diseases (not healthy plants)
+                            if "Healthy" not in disease:
+                                st.warning("**Treatment Suggestions:** Consider using appropriate fungicides or pesticides. Remove infected leaves to prevent spread.")
+                            else:
+                                st.success("**Status:** Plant appears healthy!")
